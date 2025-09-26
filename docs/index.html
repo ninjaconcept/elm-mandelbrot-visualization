@@ -5221,7 +5221,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{G: 0, H: 0, W: 0, X: 0, P: 0, Q: 0, D: 0},
+		{G: 0, H: 0, W: 0, X: 0, P: 0, Q: 0, y: 0},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$Tick = function (a) {
@@ -5658,7 +5658,7 @@ var $author$project$Main$update = F2(
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
-					{G: newCurrentRotX, H: newCurrentRotY, D: newTimeValue}),
+					{G: newCurrentRotX, H: newCurrentRotY, y: newTimeValue}),
 				$elm$core$Platform$Cmd$none);
 		} else {
 			var x = msg.a;
@@ -5698,11 +5698,13 @@ var $author$project$Main$container = F2(
 					$elm$svg$Svg$svg,
 					_List_fromArray(
 						[
-							$elm$svg$Svg$Attributes$width('100vw'),
-							$elm$svg$Svg$Attributes$height('100vh'),
+							$elm$svg$Svg$Attributes$width('100%'),
+							$elm$svg$Svg$Attributes$height('100%'),
 							$elm$svg$Svg$Attributes$viewBox(
 							$elm$core$String$fromFloat(vb.U) + (' ' + ($elm$core$String$fromFloat(vb.V) + (' ' + ($elm$core$String$fromFloat(width) + (' ' + $elm$core$String$fromFloat(height))))))),
-							A2($elm$html$Html$Attributes$style, 'display', 'block')
+							A2($elm$html$Html$Attributes$style, 'display', 'block'),
+							A2($elm$html$Html$Attributes$style, 'width', '100vw'),
+							A2($elm$html$Html$Attributes$style, 'height', '100vh')
 						]),
 					svgs)
 				]));
@@ -5710,13 +5712,18 @@ var $author$project$Main$container = F2(
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
+var $elm$virtual_dom$VirtualDom$node = function (tag) {
+	return _VirtualDom_node(
+		_VirtualDom_noScript(tag));
+};
+var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
 var $author$project$Main$Point2D = F2(
 	function (x, y) {
 		return {i: x, j: y};
 	});
 var $author$project$Main$Rotation = F3(
 	function (x, y, z) {
-		return {i: x, j: y, z: z};
+		return {i: x, j: y, A: z};
 	});
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
@@ -5754,28 +5761,49 @@ var $author$project$Main$Face = F2(
 	});
 var $author$project$Main$Point3D = F3(
 	function (x, y, z) {
-		return {i: x, j: y, z: z};
+		return {i: x, j: y, A: z};
 	});
 var $author$project$Main$Complex = F2(
 	function (real, imag) {
 		return {l: imag, m: real};
 	});
 var $elm$core$Basics$cos = _Basics_cos;
+var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$core$Basics$sin = _Basics_sin;
 var $author$project$Main$getAnimationParams = function (time) {
-	var spiralRadius = 0.3 + (0.2 * $elm$core$Basics$sin(time / 3000));
+	var structureIndex = A2(
+		$elm$core$Basics$modBy,
+		4,
+		$elm$core$Basics$floor(time / 8000));
+	var spiralRadius = 0.15 + (0.1 * $elm$core$Basics$sin(time / 3000));
 	var spiralAngle = -(time / 2000);
 	var spiralX = spiralRadius * $elm$core$Basics$cos(spiralAngle);
 	var spiralY = spiralRadius * $elm$core$Basics$sin(spiralAngle);
-	var macroZoom = 0.007 * $elm$core$Basics$sin(time / 6000);
-	var gentleZoom = 0.003 * $elm$core$Basics$sin(time / 2000);
+	var macroZoom = 0.002 * $elm$core$Basics$sin(time / 6000);
+	var gentleZoom = 0.001 * $elm$core$Basics$sin(time / 2000);
 	var figure8Speed = time / 1500;
-	var figure8X = 0.15 * $elm$core$Basics$sin(figure8Speed * 2);
-	var figure8Y = 0.08 * $elm$core$Basics$sin(figure8Speed);
+	var figure8X = 0.08 * $elm$core$Basics$sin(figure8Speed * 2);
+	var figure8Y = 0.04 * $elm$core$Basics$sin(figure8Speed);
 	var breathingIntensity = 0.5 + (0.5 * $elm$core$Basics$sin(time / 2500));
-	var baseScale = 0.010;
+	var baseScale = 0.003;
 	var animatedScale = (baseScale + macroZoom) + gentleZoom;
-	return {Y: (-0.5) + (breathingIntensity * (spiralX + figure8X)), Z: breathingIntensity * (spiralY + figure8Y), J: animatedScale};
+	var _v0 = function () {
+		switch (structureIndex) {
+			case 0:
+				return _Utils_Tuple2(-0.12, 0.74);
+			case 1:
+				return _Utils_Tuple2(-0.16, -0.65);
+			case 2:
+				return _Utils_Tuple2(-0.7269, 0.1889);
+			case 3:
+				return _Utils_Tuple2(0.3, 0.5);
+			default:
+				return _Utils_Tuple2(-0.12, 0.74);
+		}
+	}();
+	var targetX = _v0.a;
+	var targetY = _v0.b;
+	return {Y: targetX + (breathingIntensity * (spiralX + figure8X)), Z: targetY + (breathingIntensity * (spiralY + figure8Y)), J: animatedScale * 0.8};
 };
 var $avh4$elm_color$Color$RgbaSpace = F4(
 	function (a, b, c, d) {
@@ -5923,7 +5951,7 @@ var $author$project$Main$grid = F2(
 			A2(
 				$elm$core$Basics$composeR,
 				$elm$core$Basics$toFloat,
-				$elm$core$Basics$mul(3.2)),
+				$elm$core$Basics$mul(4.5)),
 			A2($elm$core$List$range, -75, 75));
 		var coordinates = A2(
 			$elm$core$List$concatMap,
@@ -5945,15 +5973,15 @@ var $author$project$Main$grid = F2(
 	});
 var $author$project$Main$project3DTo2D = F2(
 	function (point, rot) {
-		var sinZ = $elm$core$Basics$sin(rot.z);
+		var sinZ = $elm$core$Basics$sin(rot.A);
 		var sinY = $elm$core$Basics$sin(rot.j);
 		var sinX = $elm$core$Basics$sin(rot.i);
 		var perspective = 1.0;
-		var cosZ = $elm$core$Basics$cos(rot.z);
+		var cosZ = $elm$core$Basics$cos(rot.A);
 		var cosY = $elm$core$Basics$cos(rot.j);
 		var cosX = $elm$core$Basics$cos(rot.i);
-		var y1 = (point.j * cosX) - (point.z * sinX);
-		var z1 = (point.j * sinX) + (point.z * cosX);
+		var y1 = (point.j * cosX) - (point.A * sinX);
+		var z1 = (point.j * sinX) + (point.A * cosX);
 		var x2 = (point.i * cosY) + (z1 * sinY);
 		var x3 = (x2 * cosZ) - (y1 * sinZ);
 		var y3 = (x2 * sinZ) + (y1 * cosZ);
@@ -5974,7 +6002,7 @@ var $author$project$Main$sortByDistance = function (faces) {
 				A2(
 					$elm$core$List$map,
 					function (p) {
-						return p.z;
+						return p.A;
 					},
 					face.O)));
 	};
@@ -5982,9 +6010,9 @@ var $author$project$Main$sortByDistance = function (faces) {
 };
 var $author$project$Main$svgProjection = F2(
 	function (variant, model) {
-		var rotZ = 0;
-		var rotY = 0.0001 * model.D;
-		var rotX = (-0.3) + (0.1 * $elm$core$Basics$sin(model.D / 8000));
+		var rotZ = 0.08 * $elm$core$Basics$sin(model.y / 12000);
+		var rotY = 0.12 * $elm$core$Basics$sin(model.y / 10000);
+		var rotX = (-0.3) + (0.15 * $elm$core$Basics$sin(model.y / 8000));
 		var rot = A3($author$project$Main$Rotation, rotX, rotY, rotZ);
 		var draw = function (face) {
 			var centerPoint = function () {
@@ -6004,7 +6032,7 @@ var $author$project$Main$svgProjection = F2(
 						$elm$core$String$fromFloat(centerPoint.i)),
 						$elm$svg$Svg$Attributes$cy(
 						$elm$core$String$fromFloat(centerPoint.j)),
-						$elm$svg$Svg$Attributes$r('1.0'),
+						$elm$svg$Svg$Attributes$r('1.3'),
 						$elm$svg$Svg$Attributes$fill(face.ah),
 						$elm$svg$Svg$Attributes$fillOpacity('0.9')
 					]),
@@ -6014,8 +6042,10 @@ var $author$project$Main$svgProjection = F2(
 			$elm$core$List$map,
 			draw,
 			$author$project$Main$sortByDistance(
-				A2($author$project$Main$grid, variant, model.D)));
+				A2($author$project$Main$grid, variant, model.y)));
 	});
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$view = function (model) {
 	var svgs = _List_fromArray(
 		[
@@ -6029,12 +6059,30 @@ var $author$project$Main$view = function (model) {
 			A2($elm$html$Html$Attributes$style, 'backgroundColor', '#000000'),
 			A2($elm$html$Html$Attributes$style, 'height', '100vh'),
 			A2($elm$html$Html$Attributes$style, 'width', '100vw'),
+			A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+			A2($elm$html$Html$Attributes$style, 'top', '0'),
+			A2($elm$html$Html$Attributes$style, 'left', '0'),
 			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 			A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
 			A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
 			A2($elm$html$Html$Attributes$style, 'overflow', 'hidden')
 		]);
-	return A2($elm$html$Html$div, styles, svgs);
+	var globalStyles = A3(
+		$elm$html$Html$node,
+		'style',
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text('* { margin: 0; padding: 0; box-sizing: border-box; } html, body { height: 100%; width: 100%; overflow: hidden; background: #000000; }')
+			]));
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				globalStyles,
+				A2($elm$html$Html$div, styles, svgs)
+			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{aU: $author$project$Main$init, a_: $author$project$Main$subscriptions, a0: $author$project$Main$update, a1: $author$project$Main$view});

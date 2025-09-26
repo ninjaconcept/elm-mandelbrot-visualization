@@ -134,29 +134,40 @@ mandelbrotIteration c =
 getAnimationParams : Time -> { offsetX : Float, offsetY : Float, scale : Float }
 getAnimationParams time =
     let
-        -- Dramatic zoom effect for "apple man" exploration
-        gentleZoom = 0.003 * sin (time / 2000)   -- Enhanced zoom-in effect
-        macroZoom = 0.007 * sin (time / 6000)    -- More dramatic deep zoom
-        baseScale = 0.010  -- Keep baseline, but increase range
+        -- Moderate scale variations for balanced zoom effects
+        gentleZoom = 0.001 * sin (time / 2000)    -- Moderate zoom variation
+        macroZoom = 0.002 * sin (time / 6000)     -- Moderate macro variation
+        baseScale = 0.003  -- Small base with balanced variations
         animatedScale = baseScale + macroZoom + gentleZoom
 
-        -- Very fast spiral exploration pattern
+        -- Focused spiral exploration around main bulb
         spiralAngle = -(time / 2000)  -- Much faster spiral flight
-        spiralRadius = 0.3 + 0.2 * sin (time / 3000)  -- Faster radius changes
+        spiralRadius = 0.15 + 0.1 * sin (time / 3000)  -- Smaller radius to stay near center
         spiralX = spiralRadius * cos spiralAngle
         spiralY = spiralRadius * sin spiralAngle
 
-        -- Much faster figure-8 overlay pattern
+        -- Reduced figure-8 to stay focused on apple man
         figure8Speed = time / 1500  -- Much faster figure-8
-        figure8X = 0.15 * sin (figure8Speed * 2)
-        figure8Y = 0.08 * sin figure8Speed
+        figure8X = 0.08 * sin (figure8Speed * 2)  -- Smaller movement
+        figure8Y = 0.04 * sin figure8Speed  -- Smaller movement
 
         -- Much faster breathing exploration
         breathingIntensity = 0.5 + 0.5 * sin (time / 2500)  -- Much faster intensity changes
+
+        -- Rotate between different recursive apple man structures
+        structureIndex = modBy 4 (floor (time / 8000))  -- Change every 8 seconds, 4 different structures
+
+        (targetX, targetY) =
+            case structureIndex of
+                0 -> (-0.12, 0.74)   -- Upper recursive bulb
+                1 -> (-0.16, -0.65)  -- Lower recursive bulb
+                2 -> (-0.7269, 0.1889)  -- Left side structure
+                3 -> (0.3, 0.5)      -- Right side mini-bulb
+                _ -> (-0.12, 0.74)   -- Default fallback
     in
-    { offsetX = -0.5 + breathingIntensity * (spiralX + figure8X)
-    , offsetY = breathingIntensity * (spiralY + figure8Y)
-    , scale = animatedScale
+    { offsetX = targetX + breathingIntensity * (spiralX + figure8X)  -- Focus on rotating recursive structures
+    , offsetY = targetY + breathingIntensity * (spiralY + figure8Y)  -- Different recursive bulb areas
+    , scale = animatedScale * 0.8  -- Deeper zoom into recursive structure
     }
 
 -- Optimized Mandelbrot calculation with precalculated params
@@ -227,7 +238,7 @@ grid : Int -> Time -> List Face
 grid variant time =
     let
         range =
-            List.range -75 75 |> List.map (toFloat >> (*) 3.2)
+            List.range -75 75 |> List.map (toFloat >> (*) 4.5)
 
         coordinates =
             range
@@ -311,10 +322,10 @@ sortByDistance faces =
 svgProjection : Int -> Model -> List (Svg Msg)
 svgProjection variant model =
     let
-        -- Original camera animation - the best balance
-        rotX = -0.3 + 0.1 * sin (model.time / 8000)  -- Gentle tilt variation
-        rotY = 0.0001 * model.time  -- Very slow Y rotation
-        rotZ = 0  -- No Z rotation for stability
+        -- More pronounced tilting on all three axes
+        rotX = -0.3 + 0.15 * sin (model.time / 8000)  -- More X tilt
+        rotY = 0.12 * sin (model.time / 10000)        -- More Y tilt
+        rotZ = 0.08 * sin (model.time / 12000)        -- More Z tilt
 
         rot = Rotation rotX rotY rotZ
 
@@ -329,7 +340,7 @@ svgProjection variant model =
             Svg.circle
                 [ SvgAttr.cx (String.fromFloat centerPoint.x)
                 , SvgAttr.cy (String.fromFloat centerPoint.y)
-                , SvgAttr.r "1.0"
+                , SvgAttr.r "1.3"
                 , SvgAttr.fill face.color
                 , SvgAttr.fillOpacity "0.9"
                 ]
@@ -367,10 +378,12 @@ container vb svgs =
     in
     Html.div []
         [ Svg.svg
-            [ SvgAttr.width "100vw"
-            , SvgAttr.height "100vh"
+            [ SvgAttr.width "100%"
+            , SvgAttr.height "100%"
             , SvgAttr.viewBox (String.fromFloat vb.minX ++ " " ++ String.fromFloat vb.minY ++ " " ++ String.fromFloat width ++ " " ++ String.fromFloat height)
             , style "display" "block"
+            , style "width" "100vw"
+            , style "height" "100vh"
             ]
             svgs
         ]
@@ -379,10 +392,17 @@ container vb svgs =
 view : Model -> Html Msg
 view model =
     let
+        -- Global CSS reset for true fullscreen
+        globalStyles = Html.node "style" []
+            [ Html.text "* { margin: 0; padding: 0; box-sizing: border-box; } html, body { height: 100%; width: 100%; overflow: hidden; background: #000000; }" ]
+
         styles =
             [ style "backgroundColor" "#000000"
             , style "height" "100vh"
             , style "width" "100vw"
+            , style "position" "absolute"
+            , style "top" "0"
+            , style "left" "0"
             , style "display" "flex"
             , style "justify-content" "center"
             , style "align-items" "center"
@@ -392,7 +412,10 @@ view model =
         svgs =
             [ container (ViewBox -400 -300 400 300) (svgProjection 1 model) ]
     in
-    Html.div styles svgs
+    Html.div []
+        [ globalStyles
+        , Html.div styles svgs
+        ]
 
 
 main : Program () Model Msg
