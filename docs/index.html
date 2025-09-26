@@ -798,11 +798,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.ad.H === region.aj.H)
+	if (region.ad.I === region.aj.I)
 	{
-		return 'on line ' + region.ad.H;
+		return 'on line ' + region.ad.I;
 	}
-	return 'on lines ' + region.ad.H + ' through ' + region.aj.H;
+	return 'on lines ' + region.ad.I + ' through ' + region.aj.I;
 }
 
 
@@ -5221,7 +5221,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{F: 0, G: 0, W: 0, X: 0, O: 0, P: 0, C: 0},
+		{G: 0, H: 0, W: 0, X: 0, P: 0, Q: 0, D: 0},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$Tick = function (a) {
@@ -5653,12 +5653,12 @@ var $author$project$Main$update = F2(
 			var newTime = msg.a;
 			var smoothing = 0.05;
 			var newTimeValue = $elm$time$Time$posixToMillis(newTime);
-			var newCurrentRotY = model.G + ((model.P - model.G) * smoothing);
-			var newCurrentRotX = model.F + ((model.O - model.F) * smoothing);
+			var newCurrentRotY = model.H + ((model.Q - model.H) * smoothing);
+			var newCurrentRotX = model.G + ((model.P - model.G) * smoothing);
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
-					{F: newCurrentRotX, G: newCurrentRotY, C: newTimeValue}),
+					{G: newCurrentRotX, H: newCurrentRotY, D: newTimeValue}),
 				$elm$core$Platform$Cmd$none);
 		} else {
 			var x = msg.a;
@@ -5668,7 +5668,7 @@ var $author$project$Main$update = F2(
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
-					{W: x, X: y, O: targetRotX, P: targetRotY}),
+					{W: x, X: y, P: targetRotX, Q: targetRotY}),
 				$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -5714,9 +5714,9 @@ var $author$project$Main$Point2D = F2(
 	function (x, y) {
 		return {i: x, j: y};
 	});
-var $author$project$Main$Rotation = F2(
-	function (x, y) {
-		return {i: x, j: y};
+var $author$project$Main$Rotation = F3(
+	function (x, y, z) {
+		return {i: x, j: y, z: z};
 	});
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
@@ -5750,11 +5750,11 @@ var $elm$core$List$concatMap = F2(
 	});
 var $author$project$Main$Face = F2(
 	function (points, color) {
-		return {ah: color, N: points};
+		return {ah: color, O: points};
 	});
 var $author$project$Main$Point3D = F3(
 	function (x, y, z) {
-		return {i: x, j: y, Q: z};
+		return {i: x, j: y, z: z};
 	});
 var $author$project$Main$Complex = F2(
 	function (real, imag) {
@@ -5763,11 +5763,19 @@ var $author$project$Main$Complex = F2(
 var $elm$core$Basics$cos = _Basics_cos;
 var $elm$core$Basics$sin = _Basics_sin;
 var $author$project$Main$getAnimationParams = function (time) {
-	return {
-		Y: (-0.5) + (0.5 * $elm$core$Basics$sin(time / 4000)),
-		Z: 0.25 * $elm$core$Basics$cos(time / 5000),
-		I: 0.012
-	};
+	var spiralRadius = 0.3 + (0.2 * $elm$core$Basics$sin(time / 3000));
+	var spiralAngle = -(time / 2000);
+	var spiralX = spiralRadius * $elm$core$Basics$cos(spiralAngle);
+	var spiralY = spiralRadius * $elm$core$Basics$sin(spiralAngle);
+	var macroZoom = 0.007 * $elm$core$Basics$sin(time / 6000);
+	var gentleZoom = 0.003 * $elm$core$Basics$sin(time / 2000);
+	var figure8Speed = time / 1500;
+	var figure8X = 0.15 * $elm$core$Basics$sin(figure8Speed * 2);
+	var figure8Y = 0.08 * $elm$core$Basics$sin(figure8Speed);
+	var breathingIntensity = 0.5 + (0.5 * $elm$core$Basics$sin(time / 2500));
+	var baseScale = 0.010;
+	var animatedScale = (baseScale + macroZoom) + gentleZoom;
+	return {Y: (-0.5) + (breathingIntensity * (spiralX + figure8X)), Z: breathingIntensity * (spiralY + figure8Y), J: animatedScale};
 };
 var $avh4$elm_color$Color$RgbaSpace = F4(
 	function (a, b, c, d) {
@@ -5807,7 +5815,7 @@ var $author$project$Main$complexMultiply = F2(
 	});
 var $elm$core$Basics$ge = _Utils_ge;
 var $author$project$Main$mandelbrotIteration = function (c) {
-	var maxIter = 20;
+	var maxIter = 80;
 	var helper = F2(
 		function (z, iter) {
 			helper:
@@ -5874,25 +5882,33 @@ var $author$project$Main$calculateMandelbrotColor = F2(
 	function (coord, time) {
 		var saturation = 0.9;
 		var params = $author$project$Main$getAnimationParams(time);
-		var c = A2($author$project$Main$Complex, (coord.i * params.I) + params.Y, (coord.j * params.I) + params.Z);
+		var c = A2($author$project$Main$Complex, (coord.i * params.J) + params.Y, (coord.j * params.J) + params.Z);
 		var iterations = $author$project$Main$mandelbrotIteration(c);
-		var hue = (iterations === 20) ? 0.0 : ((iterations / 20.0) * 0.8);
-		var lightness = (iterations === 20) ? 0.0 : (0.3 + ((iterations / 20.0) * 0.5));
+		var hue = function () {
+			if (iterations === 80) {
+				return 0.0;
+			} else {
+				var normalizedIter = iterations / 80.0;
+				var cycles = normalizedIter * 4.0;
+				return (cycles - $elm$core$Basics$floor(cycles)) * 0.9;
+			}
+		}();
+		var lightness = (iterations === 80) ? 0.0 : (0.5 + ((iterations / 80.0) * 0.4));
 		return $avh4$elm_color$Color$toCssString(
 			A3($avh4$elm_color$Color$hsl, hue, saturation, lightness));
 	});
 var $author$project$Main$waveFunction = F3(
 	function (variant, coord, time) {
 		var params = $author$project$Main$getAnimationParams(time);
-		var c = A2($author$project$Main$Complex, (coord.i * params.I) + params.Y, (coord.j * params.I) + params.Z);
+		var c = A2($author$project$Main$Complex, (coord.i * params.J) + params.Y, (coord.j * params.J) + params.Z);
 		var iterations = $author$project$Main$mandelbrotIteration(c);
-		var height = (iterations === 20) ? 0 : (iterations * 0.3);
+		var height = (iterations === 80) ? 0 : (iterations * 0.4);
 		return height;
 	});
 var $author$project$Main$gridElement = F3(
 	function (variant, coord, time) {
+		var point = A3($author$project$Main$Point3D, coord.i, coord.j, 0);
 		var height = A3($author$project$Main$waveFunction, variant, coord, time);
-		var point = A3($author$project$Main$Point3D, coord.i, coord.j, height);
 		var color = A2($author$project$Main$calculateMandelbrotColor, coord, time);
 		return A2(
 			$author$project$Main$Face,
@@ -5907,8 +5923,8 @@ var $author$project$Main$grid = F2(
 			A2(
 				$elm$core$Basics$composeR,
 				$elm$core$Basics$toFloat,
-				$elm$core$Basics$mul(3)),
-			A2($elm$core$List$range, -50, 50));
+				$elm$core$Basics$mul(3.2)),
+			A2($elm$core$List$range, -75, 75));
 		var coordinates = A2(
 			$elm$core$List$concatMap,
 			function (x) {
@@ -5929,16 +5945,20 @@ var $author$project$Main$grid = F2(
 	});
 var $author$project$Main$project3DTo2D = F2(
 	function (point, rot) {
+		var sinZ = $elm$core$Basics$sin(rot.z);
 		var sinY = $elm$core$Basics$sin(rot.j);
 		var sinX = $elm$core$Basics$sin(rot.i);
+		var perspective = 1.0;
+		var cosZ = $elm$core$Basics$cos(rot.z);
 		var cosY = $elm$core$Basics$cos(rot.j);
 		var cosX = $elm$core$Basics$cos(rot.i);
-		var y1 = (point.j * cosX) - (point.Q * sinX);
-		var z1 = (point.j * sinX) + (point.Q * cosX);
+		var y1 = (point.j * cosX) - (point.z * sinX);
+		var z1 = (point.j * sinX) + (point.z * cosX);
 		var x2 = (point.i * cosY) + (z1 * sinY);
+		var x3 = (x2 * cosZ) - (y1 * sinZ);
+		var y3 = (x2 * sinZ) + (y1 * cosZ);
 		var z2 = ((-point.i) * sinY) + (z1 * cosY);
-		var perspective = 300 / (300 + z2);
-		return A2($author$project$Main$Point2D, x2 * perspective, y1 * perspective);
+		return A2($author$project$Main$Point2D, x3 * perspective, y3 * perspective);
 	});
 var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$core$List$sortBy = _List_sortBy;
@@ -5948,26 +5968,27 @@ var $elm$core$List$sum = function (numbers) {
 var $author$project$Main$sortByDistance = function (faces) {
 	var averageZ = function (face) {
 		return function (sum) {
-			return sum / $elm$core$List$length(face.N);
+			return sum / $elm$core$List$length(face.O);
 		}(
 			$elm$core$List$sum(
 				A2(
 					$elm$core$List$map,
 					function (p) {
-						return p.Q;
+						return p.z;
 					},
-					face.N)));
+					face.O)));
 	};
 	return A2($elm$core$List$sortBy, averageZ, faces);
 };
 var $author$project$Main$svgProjection = F2(
 	function (variant, model) {
-		var rotY = 0.0001 * model.C;
-		var rotX = (-0.3) + (0.1 * $elm$core$Basics$sin(model.C / 8000));
-		var rot = A2($author$project$Main$Rotation, rotX, rotY);
+		var rotZ = 0;
+		var rotY = 0.0001 * model.D;
+		var rotX = (-0.3) + (0.1 * $elm$core$Basics$sin(model.D / 8000));
+		var rot = A3($author$project$Main$Rotation, rotX, rotY, rotZ);
 		var draw = function (face) {
 			var centerPoint = function () {
-				var _v0 = face.N;
+				var _v0 = face.O;
 				if (_v0.b) {
 					var p = _v0.a;
 					return A2($author$project$Main$project3DTo2D, p, rot);
@@ -5983,7 +6004,7 @@ var $author$project$Main$svgProjection = F2(
 						$elm$core$String$fromFloat(centerPoint.i)),
 						$elm$svg$Svg$Attributes$cy(
 						$elm$core$String$fromFloat(centerPoint.j)),
-						$elm$svg$Svg$Attributes$r('1.5'),
+						$elm$svg$Svg$Attributes$r('1.0'),
 						$elm$svg$Svg$Attributes$fill(face.ah),
 						$elm$svg$Svg$Attributes$fillOpacity('0.9')
 					]),
@@ -5993,14 +6014,14 @@ var $author$project$Main$svgProjection = F2(
 			$elm$core$List$map,
 			draw,
 			$author$project$Main$sortByDistance(
-				A2($author$project$Main$grid, variant, model.C)));
+				A2($author$project$Main$grid, variant, model.D)));
 	});
 var $author$project$Main$view = function (model) {
 	var svgs = _List_fromArray(
 		[
 			A2(
 			$author$project$Main$container,
-			A4($author$project$Main$ViewBox, -300, -200, 300, 200),
+			A4($author$project$Main$ViewBox, -400, -300, 400, 300),
 			A2($author$project$Main$svgProjection, 1, model))
 		]);
 	var styles = _List_fromArray(

@@ -10,7 +10,6 @@ A modernized Elm demo showcasing animated 3D Mandelbrot set visualizations with 
 
 - Real-time 3D Mandelbrot set visualization
 - Animated fractal parameters with smooth transitions
-- Rotating camera perspective with mouse interaction
 - Color-mapped fractal escape time visualization
 
 ## Setup

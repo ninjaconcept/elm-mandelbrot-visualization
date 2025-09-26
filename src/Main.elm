@@ -111,7 +111,7 @@ getJuliaParams time =
 mandelbrotIteration : Complex -> Int
 mandelbrotIteration c =
     let
-        maxIter = 20
+        maxIter = 80
 
         helper z iter =
             if iter >= maxIter then
@@ -130,12 +130,33 @@ mandelbrotIteration c =
     in
     helper (Complex 0 0) 0
 
--- Precalculated animation parameters for performance
+-- Advanced fractal exploration with multiple animation layers
 getAnimationParams : Time -> { offsetX : Float, offsetY : Float, scale : Float }
 getAnimationParams time =
-    { offsetX = -0.5 + 0.5 * sin (time / 4000)
-    , offsetY = 0.25 * cos (time / 5000)
-    , scale = 0.012
+    let
+        -- Dramatic zoom effect for "apple man" exploration
+        gentleZoom = 0.003 * sin (time / 2000)   -- Enhanced zoom-in effect
+        macroZoom = 0.007 * sin (time / 6000)    -- More dramatic deep zoom
+        baseScale = 0.010  -- Keep baseline, but increase range
+        animatedScale = baseScale + macroZoom + gentleZoom
+
+        -- Very fast spiral exploration pattern
+        spiralAngle = -(time / 2000)  -- Much faster spiral flight
+        spiralRadius = 0.3 + 0.2 * sin (time / 3000)  -- Faster radius changes
+        spiralX = spiralRadius * cos spiralAngle
+        spiralY = spiralRadius * sin spiralAngle
+
+        -- Much faster figure-8 overlay pattern
+        figure8Speed = time / 1500  -- Much faster figure-8
+        figure8X = 0.15 * sin (figure8Speed * 2)
+        figure8Y = 0.08 * sin figure8Speed
+
+        -- Much faster breathing exploration
+        breathingIntensity = 0.5 + 0.5 * sin (time / 2500)  -- Much faster intensity changes
+    in
+    { offsetX = -0.5 + breathingIntensity * (spiralX + figure8X)
+    , offsetY = breathingIntensity * (spiralY + figure8Y)
+    , scale = animatedScale
     }
 
 -- Optimized Mandelbrot calculation with precalculated params
@@ -146,12 +167,12 @@ waveFunction variant coord time =
         c = Complex (coord.x * params.scale + params.offsetX) (coord.y * params.scale + params.offsetY)
         iterations = mandelbrotIteration c
 
-        -- Very flat height mapping to see fractal structure
+        -- Enhanced height mapping to show fractal detail
         height =
-            if iterations == 20 then
+            if iterations == 80 then
                 0  -- Points in set are flat
             else
-                toFloat iterations * 0.3  -- Very low height variation
+                toFloat iterations * 0.4  -- Higher variation for detail
     in
     height
 
@@ -165,18 +186,24 @@ calculateMandelbrotColor coord time =
         c = Complex (coord.x * params.scale + params.offsetX) (coord.y * params.scale + params.offsetY)
         iterations = mandelbrotIteration c
 
-        -- Classic Mandelbrot colors
+        -- Enhanced Mandelbrot colors with more detail
         hue =
-            if iterations == 20 then
+            if iterations == 80 then
                 0.0  -- Black for the set
             else
-                toFloat iterations / 20.0 * 0.8
+                -- Multiple color cycles to reveal fine structure
+                let
+                    normalizedIter = toFloat iterations / 80.0
+                    cycles = normalizedIter * 4.0  -- 4 color cycles for detail
+                in
+                (cycles - toFloat (floor cycles)) * 0.9
 
         lightness =
-            if iterations == 20 then
+            if iterations == 80 then
                 0.0  -- Black
             else
-                0.3 + (toFloat iterations / 20.0) * 0.5
+                -- Brighter colors for better visibility
+                0.5 + (toFloat iterations / 80.0) * 0.4
 
         saturation = 0.9
     in
@@ -190,8 +217,8 @@ gridElement variant coord time =
         height = waveFunction variant coord time
         color = calculateMandelbrotColor coord time
 
-        -- Single point instead of 4-point polygon
-        point = Point3D coord.x coord.y height
+        -- Flat 2D point without z-translation effects
+        point = Point3D coord.x coord.y 0
     in
     Face [point] color
 
@@ -200,7 +227,7 @@ grid : Int -> Time -> List Face
 grid variant time =
     let
         range =
-            List.range -50 50 |> List.map (toFloat >> (*) 3)
+            List.range -75 75 |> List.map (toFloat >> (*) 3.2)
 
         coordinates =
             range
@@ -216,6 +243,7 @@ grid variant time =
 type alias Rotation =
     { x : Float
     , y : Float
+    , z : Float
     }
 
 
@@ -248,11 +276,23 @@ project3DTo2D point rot =
         z2 =
             -point.x * sinY + z1 * cosY
 
-        -- Simple perspective projection
-        perspective =
-            300 / (300 + z2)
+        -- Apply rotation around Z axis
+        cosZ =
+            cos rot.z
+
+        sinZ =
+            sin rot.z
+
+        x3 =
+            x2 * cosZ - y1 * sinZ
+
+        y3 =
+            x2 * sinZ + y1 * cosZ
+
+        -- Simple orthographic projection without z-translation
+        perspective = 1.0
     in
-    Point2D (x2 * perspective) (y1 * perspective)
+    Point2D (x3 * perspective) (y3 * perspective)
 
 
 sortByDistance : List Face -> List Face
@@ -271,11 +311,12 @@ sortByDistance faces =
 svgProjection : Int -> Model -> List (Svg Msg)
 svgProjection variant model =
     let
-        -- Slow automatic camera rotation to keep Mandelbrot visible
+        -- Original camera animation - the best balance
         rotX = -0.3 + 0.1 * sin (model.time / 8000)  -- Gentle tilt variation
         rotY = 0.0001 * model.time  -- Very slow Y rotation
+        rotZ = 0  -- No Z rotation for stability
 
-        rot = Rotation rotX rotY
+        rot = Rotation rotX rotY rotZ
 
         draw face =
             let
@@ -288,7 +329,7 @@ svgProjection variant model =
             Svg.circle
                 [ SvgAttr.cx (String.fromFloat centerPoint.x)
                 , SvgAttr.cy (String.fromFloat centerPoint.y)
-                , SvgAttr.r "1.5"
+                , SvgAttr.r "1.0"
                 , SvgAttr.fill face.color
                 , SvgAttr.fillOpacity "0.9"
                 ]
@@ -349,7 +390,7 @@ view model =
             ]
 
         svgs =
-            [ container (ViewBox -300 -200 300 200) (svgProjection 1 model) ]
+            [ container (ViewBox -400 -300 400 300) (svgProjection 1 model) ]
     in
     Html.div styles svgs
 
