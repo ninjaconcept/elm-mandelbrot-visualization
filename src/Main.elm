@@ -3,7 +3,6 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html)
 import Html.Attributes exposing (style)
-import Html.Events
 import Json.Decode as Decode
 import Svg exposing (Svg)
 import Svg.Attributes as SvgAttr
@@ -40,75 +39,168 @@ type alias Face =
     }
 
 
-waveFunction : GridCoordinate -> Time -> Float
-waveFunction coord time =
+type alias Complex =
+    { real : Float
+    , imag : Float
+    }
+
+
+complexAdd : Complex -> Complex -> Complex
+complexAdd a b =
+    { real = a.real + b.real, imag = a.imag + b.imag }
+
+
+complexMultiply : Complex -> Complex -> Complex
+complexMultiply a b =
+    { real = a.real * b.real - a.imag * b.imag
+    , imag = a.real * b.imag + a.imag * b.real
+    }
+
+
+complexMagnitudeSquared : Complex -> Float
+complexMagnitudeSquared z =
+    z.real * z.real + z.imag * z.imag
+
+
+juliaIteration : Complex -> Complex -> Int -> Int -> Int
+juliaIteration z c maxIter currentIter =
+    if currentIter >= maxIter || complexMagnitudeSquared z > 4.0 then
+        currentIter
+    else
+        let
+            zNext = complexAdd (complexMultiply z z) c
+        in
+        juliaIteration zNext c maxIter (currentIter + 1)
+
+
+-- Optimized Julia set calculation with early bailout
+juliaIterationOptimized : Complex -> Complex -> Int
+juliaIterationOptimized z c =
     let
-        r =
-            sqrt (coord.x ^ 2 + coord.y ^ 2)
+        maxIter = 20  -- Reduced iterations for performance
 
-        -- Primary ripples with amplitude decay
-        primaryRipples =
-            (200 / (r + 20)) * sin (r / 8 - time / 200)
-
-        -- Secondary interference ripples
-        secondaryRipples =
-            8 * sin (r / 12 - time / 300) * cos (time / 2500)
-
-        -- High frequency surface waves with decay
-        surfaceWaves =
-            5 * sin (r / 4 - time / 150) * (100 / (r + 50))
-
-        -- Radial wave modulation (creates wave packets)
-        wavePackets =
-            10 * sin (r / 15 - time / 250) * (1 + 0.5 * sin (r / 25 - time / 500))
-
-        -- Cross interference from multiple sources
-        offset1 = sqrt ((coord.x - 50) ^ 2 + (coord.y - 30) ^ 2)
-        offset2 = sqrt ((coord.x + 40) ^ 2 + (coord.y - 20) ^ 2)
-
-        interference1 = 6 * sin (offset1 / 10 - time / 225) * (80 / (offset1 + 40))
-        interference2 = 4 * sin (offset2 / 8 - time / 275) * (60 / (offset2 + 30))
-
-        -- Combine all wave components
-        z =
-            primaryRipples + secondaryRipples + surfaceWaves + wavePackets + interference1 + interference2
+        helper zCurrent iter =
+            if iter >= maxIter then
+                maxIter
+            else
+                let
+                    magSq = complexMagnitudeSquared zCurrent
+                in
+                if magSq > 4.0 then
+                    iter
+                else
+                    let
+                        zNext = complexAdd (complexMultiply zCurrent zCurrent) c
+                    in
+                    helper zNext (iter + 1)
     in
-    z
+    helper z 0
 
 
-gridElement : GridCoordinate -> Time -> Face
-gridElement coord time =
+-- Precompute Julia set parameters for the current time
+getJuliaParams : Time -> Complex
+getJuliaParams time =
     let
+        cReal = 0.7885 * cos (time / 2000)
+        cImag = 0.7885 * sin (time / 3000)
+    in
+    Complex cReal cImag
+
+
+-- Mandelbrot set calculation for smoother height transitions
+mandelbrotIteration : Complex -> Int
+mandelbrotIteration c =
+    let
+        maxIter = 20
+
+        helper z iter =
+            if iter >= maxIter then
+                maxIter
+            else
+                let
+                    magSq = complexMagnitudeSquared z
+                in
+                if magSq > 4.0 then
+                    iter
+                else
+                    let
+                        zNext = complexAdd (complexMultiply z z) c
+                    in
+                    helper zNext (iter + 1)
+    in
+    helper (Complex 0 0) 0
+
+-- Precalculated animation parameters for performance
+getAnimationParams : Time -> { offsetX : Float, offsetY : Float, scale : Float }
+getAnimationParams time =
+    { offsetX = -0.5 + 0.5 * sin (time / 4000)
+    , offsetY = 0.25 * cos (time / 5000)
+    , scale = 0.012
+    }
+
+-- Optimized Mandelbrot calculation with precalculated params
+waveFunction : Int -> GridCoordinate -> Time -> Float
+waveFunction variant coord time =
+    let
+        params = getAnimationParams time
+        c = Complex (coord.x * params.scale + params.offsetX) (coord.y * params.scale + params.offsetY)
+        iterations = mandelbrotIteration c
+
+        -- Very flat height mapping to see fractal structure
         height =
-            waveFunction coord time
-
-        -- Subtle blue-to-white gradient based on height
-        lightness =
-            0.3 + (height + 50) / 200  -- Maps height to lightness
-
-        color =
-            Color.hsl 0.6 0.3 lightness
-                |> Color.toCssString
-
-        createPoint : GridCoordinate -> Point3D
-        createPoint c =
-            Point3D c.x c.y (waveFunction c time)
-
-        points =
-            [ createPoint (GridCoordinate (coord.x - 5) (coord.y - 5))
-            , createPoint (GridCoordinate coord.x (coord.y - 5))
-            , createPoint coord
-            , createPoint (GridCoordinate (coord.x - 5) coord.y)
-            ]
+            if iterations == 20 then
+                0  -- Points in set are flat
+            else
+                toFloat iterations * 0.3  -- Very low height variation
     in
-    Face points color
+    height
 
 
-grid : Time -> List Face
-grid time =
+-- Mandelbrot color calculation with smooth gradients
+calculateMandelbrotColor : GridCoordinate -> Time -> String
+calculateMandelbrotColor coord time =
+    let
+        -- Use precalculated params for consistency and performance
+        params = getAnimationParams time
+        c = Complex (coord.x * params.scale + params.offsetX) (coord.y * params.scale + params.offsetY)
+        iterations = mandelbrotIteration c
+
+        -- Classic Mandelbrot colors
+        hue =
+            if iterations == 20 then
+                0.0  -- Black for the set
+            else
+                toFloat iterations / 20.0 * 0.8
+
+        lightness =
+            if iterations == 20 then
+                0.0  -- Black
+            else
+                0.3 + (toFloat iterations / 20.0) * 0.5
+
+        saturation = 0.9
+    in
+    Color.hsl hue saturation lightness
+        |> Color.toCssString
+
+
+gridElement : Int -> GridCoordinate -> Time -> Face
+gridElement variant coord time =
+    let
+        height = waveFunction variant coord time
+        color = calculateMandelbrotColor coord time
+
+        -- Single point instead of 4-point polygon
+        point = Point3D coord.x coord.y height
+    in
+    Face [point] color
+
+
+grid : Int -> Time -> List Face
+grid variant time =
     let
         range =
-            List.range -40 40 |> List.map (toFloat >> (*) 5)
+            List.range -50 50 |> List.map (toFloat >> (*) 3)
 
         coordinates =
             range
@@ -118,7 +210,7 @@ grid time =
                     )
     in
     coordinates
-        |> List.map (\coord -> gridElement coord time)
+        |> List.map (\coord -> gridElement variant coord time)
 
 
 type alias Rotation =
@@ -176,46 +268,34 @@ sortByDistance faces =
         |> List.sortBy averageZ
 
 
-svgProjection : Model -> List (Svg Msg)
-svgProjection model =
+svgProjection : Int -> Model -> List (Svg Msg)
+svgProjection variant model =
     let
-        -- Reduce base rotation when mouse is active
-        hasMouseInput = model.mouseX /= 0 || model.mouseY /= 0
-        baseScale = if hasMouseInput then 0.2 else 1.0
+        -- Slow automatic camera rotation to keep Mandelbrot visible
+        rotX = -0.3 + 0.1 * sin (model.time / 8000)  -- Gentle tilt variation
+        rotY = 0.0001 * model.time  -- Very slow Y rotation
 
-        baseRotX = -0.0003 * model.time * baseScale
-        baseRotY = 0.0006 * model.time * baseScale
-
-        -- Mouse influence (stronger influence, normalized to screen size)
-        mouseInfluenceX = (model.mouseY - 400) / 400 * 0.8
-        mouseInfluenceY = (model.mouseX - 400) / 400 * 0.8
-
-        rot =
-            Rotation (baseRotX + mouseInfluenceX) (baseRotY + mouseInfluenceY)
+        rot = Rotation rotX rotY
 
         draw face =
             let
-                projectedPoints =
-                    face.points
-                        |> List.map (\p -> project3DTo2D p rot)
-
-                pointsString =
-                    projectedPoints
-                        |> List.map (\p -> String.fromFloat p.x ++ "," ++ String.fromFloat p.y)
-                        |> String.join " "
+                -- Just use the center point of each face
+                centerPoint =
+                    case face.points of
+                        p :: _ -> project3DTo2D p rot
+                        [] -> Point2D 0 0
             in
-            Svg.polygon
-                [ SvgAttr.stroke "white"
-                , SvgAttr.strokeWidth "0.5"
-                , SvgAttr.strokeOpacity "0.5"
+            Svg.circle
+                [ SvgAttr.cx (String.fromFloat centerPoint.x)
+                , SvgAttr.cy (String.fromFloat centerPoint.y)
+                , SvgAttr.r "1.5"
                 , SvgAttr.fill face.color
-                , SvgAttr.fillOpacity "0.5"
-                , SvgAttr.points pointsString
+                , SvgAttr.fillOpacity "0.9"
                 ]
                 []
     in
     model.time
-        |> grid
+        |> grid variant
         |> sortByDistance
         |> List.map draw
 
@@ -246,9 +326,10 @@ container vb svgs =
     in
     Html.div []
         [ Svg.svg
-            [ SvgAttr.width (String.fromFloat width)
-            , SvgAttr.height (String.fromFloat height)
+            [ SvgAttr.width "100vw"
+            , SvgAttr.height "100vh"
             , SvgAttr.viewBox (String.fromFloat vb.minX ++ " " ++ String.fromFloat vb.minY ++ " " ++ String.fromFloat width ++ " " ++ String.fromFloat height)
+            , style "display" "block"
             ]
             svgs
         ]
@@ -260,21 +341,17 @@ view model =
         styles =
             [ style "backgroundColor" "#000000"
             , style "height" "100vh"
+            , style "width" "100vw"
             , style "display" "flex"
             , style "justify-content" "center"
             , style "align-items" "center"
-            , style "flex-wrap" "wrap"
+            , style "overflow" "hidden"
             ]
 
         svgs =
-            [ container (ViewBox -400 -400 400 400) (svgProjection model) ]
+            [ container (ViewBox -300 -200 300 200) (svgProjection 1 model) ]
     in
-    Html.div
-        ([ Html.Events.on "mousemove" mouseDecoder
-         , Html.Events.on "pointermove" mouseDecoder
-         , style "touch-action" "none"
-         ] ++ styles)
-        svgs
+    Html.div styles svgs
 
 
 main : Program () Model Msg
@@ -294,12 +371,24 @@ type alias Model =
     { time : Float
     , mouseX : Float
     , mouseY : Float
+    , targetRotX : Float
+    , targetRotY : Float
+    , currentRotX : Float
+    , currentRotY : Float
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { time = 0, mouseX = 0, mouseY = 0 }, Cmd.none )
+    ( { time = 0
+      , mouseX = 0
+      , mouseY = 0
+      , targetRotX = 0
+      , targetRotY = 0
+      , currentRotX = 0
+      , currentRotY = 0
+      }
+    , Cmd.none )
 
 
 -- UPDATE
@@ -314,10 +403,35 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick newTime ->
-            ( { model | time = Time.posixToMillis newTime |> toFloat }, Cmd.none )
+            let
+                newTimeValue = Time.posixToMillis newTime |> toFloat
+
+                -- Smooth interpolation towards target rotation
+                smoothing = 0.05  -- Lower = smoother, higher = more responsive
+
+                newCurrentRotX = model.currentRotX + (model.targetRotX - model.currentRotX) * smoothing
+                newCurrentRotY = model.currentRotY + (model.targetRotY - model.currentRotY) * smoothing
+            in
+            ( { model
+              | time = newTimeValue
+              , currentRotX = newCurrentRotX
+              , currentRotY = newCurrentRotY
+              }
+            , Cmd.none )
 
         MouseMove x y ->
-            ( { model | mouseX = x, mouseY = y }, Cmd.none )
+            let
+                -- Calculate target rotation based on mouse position
+                targetRotX = (y - 400) / 400 * 0.8
+                targetRotY = (x - 400) / 400 * 0.8
+            in
+            ( { model
+              | mouseX = x
+              , mouseY = y
+              , targetRotX = targetRotX
+              , targetRotY = targetRotY
+              }
+            , Cmd.none )
 
 
 -- SUBSCRIPTIONS
