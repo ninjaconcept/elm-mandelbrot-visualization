@@ -1,17 +1,17 @@
-# 3D Vector Animations in Elm
+# 3D Mandelbrot Animations in Elm
 
-A modernized Elm demo showcasing animated 3D grid visualizations with rotating perspectives and wave effects.
+A modernized Elm demo showcasing animated 3D Mandelbrot set visualizations with rotating perspectives and fractal mathematics.
 
-[![3D Vector Animation Demo](demo-screenshot.png)](https://ninjaconcept.github.io/elm-vector-demo-1/)
+[![3D Mandelbrot Animation Demo](demo-screenshot.png)](https://ninjaconcept.github.io/elm-mandelbrot-visualization/)
 
-**[🌐 Live Demo](https://ninjaconcept.github.io/elm-vector-demo-1/)**
+**[🌐 Live Demo](https://ninjaconcept.github.io/elm-mandelbrot-visualization/)**
 
 ## Features
 
-- Animated 3D wave grid with mathematical wave functions
-- Rotating camera perspective
-- Real-time color-mapped height visualization
-- Multiple synchronized animation layers
+- Real-time 3D Mandelbrot set visualization
+- Animated fractal parameters with smooth transitions
+- Rotating camera perspective with mouse interaction
+- Color-mapped fractal escape time visualization
 
 ## Setup
 
@@ -36,13 +36,14 @@ A modernized Elm demo showcasing animated 3D grid visualizations with rotating p
 
 ## Project Structure
 
-- `src/Main.elm` - Main application with 3D math and rendering
+- `src/Main.elm` - Main application with Mandelbrot set calculations and 3D rendering
 - `elm.json` - Project dependencies and configuration
 
 ## Notes
 
 This project has been updated from Elm 0.18 to 0.19.1 with:
 - Removed deprecated OpenSolid geometry library
-- Custom 3D projection and rotation mathematics
+- Custom Mandelbrot set and Julia set mathematical calculations
+- 3D projection and rotation mathematics for fractal visualization
 - Modern Elm Browser.element architecture
-- Updated Time and animation handling
+- Optimized fractal iteration algorithms for real-time performance

@@ -1,15 +1,15 @@
-# 3D Vector Animations Demo
+# 3D Mandelbrot Animations Demo
 
-This is the live demo of the 3D Vector Animations in Elm project.
+This is the live demo of the 3D Mandelbrot Animations in Elm project.
 
-View the live demo: [https://ninjaconcept.github.io/elm-vector-demo-1/](https://ninjaconcept.github.io/elm-vector-demo-1/)
+View the live demo: [https://ninjaconcept.github.io/elm-mandelbrot-visualization/](https://ninjaconcept.github.io/elm-mandelbrot-visualization/)
 
 ## About
 
 This demo showcases:
-- Animated 3D wave grid with mathematical wave functions
-- Rotating camera perspective
-- Real-time color-mapped height visualization
-- Multiple synchronized animation layers
+- Real-time 3D Mandelbrot set visualization
+- Animated fractal parameters with smooth transitions
+- Rotating camera perspective with mouse interaction
+- Color-mapped fractal escape time visualization
 
-Built with modern Elm 0.19.1 and custom 3D mathematics.
+Built with modern Elm 0.19.1 and custom fractal mathematics.
